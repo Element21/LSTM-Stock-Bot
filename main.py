@@ -19,20 +19,17 @@ else:
     # sector_performance = scrape_data.get_sector_performance()
     nasdaq_symbols = scrape_data.get_nasdaq_symbols()
 
-print(scrape_data.screen_for_stocks(strategy='trending'))
+chosen_tickers = scrape_data.screen_for_stocks(strategy="trending")
 
-# scaler = StandardScaler()
-
-# with ProgressBar(
-#     title=HTML(
-#         f'Fitting models for <style bg="yellow" fg="black">{ticker_daily_change_dict.shape[0]} tickers...</style>'
-#     )
-# ) as pb:
-#     for ticker, _ in pb(ticker_daily_change_dict):
-#         data = scrape_data.get_ticker_timeseries_data(ticker)
-#         data = pd.DataFrame(scaler.fit_transform(data), columns=data.columns)
-#         dataset = utils.create_timeseries_dataset(data, is_ticker_crypto=True)
-#         LSTM_Predictor = predictor.LSTM(lstm_units_per_layer=64)
-#         model = LSTM_Predictor.create_model()
-#         model.fit(dataset, epochs=100, verbose=0)
-#         model.save(f"{ticker}.h5")
+with ProgressBar(
+    title=HTML(
+        f'Fitting models for <style bg="yellow" fg="black">{len(chosen_tickers)} tickers...</style>'
+    )
+) as pb:
+    for ticker in pb(chosen_tickers):
+        data = scrape_data.get_chart_data(ticker)
+        scaled_data = utils.scale_data(data)
+        dataset = utils.create_timeseries_dataset(scaled_data)
+        price_predictor = predictor.Price_Predictor(dataset=dataset)
+        model = price_predictor.create_model()
+        model.save(f'{ticker}.h5')
