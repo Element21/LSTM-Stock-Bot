@@ -1,29 +1,25 @@
+from sqlite3 import Time
 import requests
 import pandas as pd
-import pandas_datareader.data as web
 import datetime as dt
+from alpaca_trade_api.rest import REST, TimeFrame
+
+API_KEY = "PKKBMM1AYSSXPDLLRLUD"
+API_SECRET = "JEw43h923In1Z9y9VlhfJovw86QcQLEN9YWjiPq1"
+BASE_URL = "https://paper-api.alpaca.markets"
+
+alpaca = REST(API_KEY, API_SECRET, BASE_URL)
 
 
-def get_quote(tickers: list) -> pd.DataFrame:
-    return web.YahooQuotesReader(
-        tickers, start=dt.datetime.today(), end=dt.datetime.today()
-    ).read()
-
-
-def get_chart_data(
-    tickers: list, interval: str = "d", adjust_price=True
+def get_bar_data(
+    ticker: str | list[str],
+    interval: TimeFrame = TimeFrame.Hour,
+    adj="all",
+    lmt: int = int(10e12),
 ) -> pd.DataFrame:
-    # interval can be 'd' (daily), 'w' (weekly), 'm' (monthly)
-    return (
-        web.YahooDailyReader(
-            tickers,
-            adjust_price=adjust_price,
-            start=dt.datetime(1970, 1, 1),
-            end=dt.datetime.today(),
-        )
-        .read()
-        .iloc[::-1]
-    )
+    return alpaca.get_bars(
+        ticker, interval, "2000-01-01T00:00:00Z", adjustment=adj, limit=lmt, feed="sip"
+    ).df
 
 
 def screen_for_stocks(
